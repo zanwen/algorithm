@@ -5,7 +5,7 @@
  * use it only in accordance with the terms of the license agreement you entered
  * into with Tuhu.cn
  */
-package top.zhenganwen.learn.algorithm.leetcode.commons;
+package top.zhenganwen.learn.algorithm.commons;
 
 import java.time.LocalDateTime;
 import java.util.concurrent.Callable;

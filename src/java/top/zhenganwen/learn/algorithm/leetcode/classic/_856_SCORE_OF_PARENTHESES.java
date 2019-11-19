@@ -5,7 +5,7 @@
  * use it only in accordance with the terms of the license agreement you entered
  * into with Tuhu.cn
  */
-package top.zhenganwen.learn.algorithm.difficult;
+package top.zhenganwen.learn.algorithm.leetcode.classic;
 
 import java.util.Stack;
 

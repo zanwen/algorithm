@@ -7,7 +7,7 @@
  */
 package top.zhenganwen.learn.algorithm.leetcode.linkedlist;
 
-import top.zhenganwen.learn.algorithm.leetcode.commons.ListNode;
+import top.zhenganwen.learn.algorithm.commons.ListNode;
 
 /**
  * @author zhenganwen

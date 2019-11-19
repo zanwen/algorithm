@@ -1,4 +1,4 @@
-package top.zhenganwen.learn.algorithm.leetcode.commons;
+package top.zhenganwen.learn.algorithm.commons;
 
 /**
  * @author zhenganwen

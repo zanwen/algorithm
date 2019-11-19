@@ -7,7 +7,7 @@
  */
 package top.zhenganwen.learn.algorithm.leetcode.classic;
 
-import top.zhenganwen.learn.algorithm.leetcode.commons.Timer;
+import top.zhenganwen.learn.algorithm.commons.Timer;
 
 /**
  * @author zhenganwen

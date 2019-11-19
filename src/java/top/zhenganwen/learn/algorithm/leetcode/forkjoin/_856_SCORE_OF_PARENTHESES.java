@@ -5,7 +5,7 @@
  * use it only in accordance with the terms of the license agreement you entered
  * into with Tuhu.cn
  */
-package top.zhenganwen.learn.algorithm.leetcode.divideToSolve;
+package top.zhenganwen.learn.algorithm.leetcode.forkjoin;
 
 import java.util.Stack;
 
