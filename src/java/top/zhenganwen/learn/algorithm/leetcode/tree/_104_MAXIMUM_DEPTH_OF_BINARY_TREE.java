@@ -8,10 +8,11 @@
 package top.zhenganwen.learn.algorithm.leetcode.tree;
 
 /**
+ * https://leetcode-cn.com/problems/maximum-depth-of-binary-tree
  * @author zhenganwen
  * @date 2019/11/19 9:05
  */
-public class _104_MAXINUM_DEPTH_OF_BINARY_TREE {
+public class _104_MAXIMUM_DEPTH_OF_BINARY_TREE {
 
     public int maxDepth(TreeNode root) {
         if(root == null) return 0;

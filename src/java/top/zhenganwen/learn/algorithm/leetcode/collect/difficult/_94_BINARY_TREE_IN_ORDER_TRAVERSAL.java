@@ -5,11 +5,13 @@
  * use it only in accordance with the terms of the license agreement you entered
  * into with Tuhu.cn
  */
-package top.zhenganwen.learn.algorithm.leetcode.tree;
+package top.zhenganwen.learn.algorithm.leetcode.collect.difficult;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
+
+import top.zhenganwen.learn.algorithm.leetcode.tree.TreeNode;
 
 /**
  * https://leetcode-cn.com/problems/binary-tree-inorder-traversal
