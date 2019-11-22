@@ -8,11 +8,9 @@
 package top.zhenganwen.learn.algorithm.datastructure.tree;
 
 import top.zhenganwen.learn.algorithm.commons.printer.BinaryTreeInfo;
+import top.zhenganwen.learn.algorithm.commons.printer.BinaryTrees;
 
-import java.util.Comparator;
-import java.util.LinkedList;
-import java.util.Objects;
-import java.util.Stack;
+import java.util.*;
 
 import static java.util.Objects.isNull;
 
@@ -63,6 +61,118 @@ public class BinarySearchTree<E> implements BinaryTreeInfo {
             parent.left = node;
         }
         size++;
+    }
+
+    public void remove(E element) {
+        remove(node(element));
+    }
+
+    private void remove(Node<E> node) {
+        if (node == null)
+            return;
+
+        size--;
+        if (hasTwoChild(node)) {
+            // the node's degree is 2, use node's predecessor/successor's element
+            // cover the node, and then delete the predecessor/successor
+            Node<E> successor = Objects.requireNonNull(successor(node));
+            node.element = successor.element;
+            node = successor;
+        }
+
+        // reach here, the degree of the node is possible only 0 or 1
+        // that is to say, the node only has one child
+        Node replacement = node.left == null ? node.right : node.left;
+        if (replacement != null) {
+            // the node's degree is 1
+            replacement.parent = node.parent;
+            if (isRoot(node)) {
+                root = replacement;
+            } else if (compare(node.element, node.parent.element) >= 0) {
+                node.parent.right = replacement;
+            } else {
+                node.parent.left = replacement;
+            }
+        } else {
+            // the node is leaf node
+            if (isRoot(node)) {
+                root = null;
+            } else if (compare(node.element, node.parent.element) >= 0) {
+                node.parent.right = null;
+            } else {
+                node.parent.left = null;
+            }
+        }
+    }
+
+    private boolean isRoot(Node<E> node) {
+        return node.parent == null;
+    }
+
+    public boolean contains(E element) {
+        return node(element) != null;
+    }
+
+    public void clear() {
+        root = null;
+        size = 0;
+    }
+
+    public Node node(E element) {
+        Node<E> node = root;
+        while (node != null) {
+            int compare = compare(element, node.element);
+            if (compare == 0)
+                return node;
+            else if (compare > 0) {
+                node = node.right;
+            } else {
+                node = node.left;
+            }
+        }
+        return null;
+    }
+
+    private Node predecessor(Node<E> node) {
+        if (node.left != null) {
+            node = node.left;
+            while (node.right != null) {
+                node = node.right;
+            }
+            return node;
+        } else {
+            Node parent = node.parent;
+            while (parent != null) {
+                if (node == parent.right) {
+                    return parent;
+                } else {
+                    node = parent;
+                    parent = node.parent;
+                }
+            }
+            return null;
+        }
+    }
+
+    private Node successor(Node<E> node) {
+        if (node.right != null) {
+            node = node.right;
+            while (node.left != null) {
+                node = node.left;
+            }
+            return node;
+        } else {
+            Node parent = node.parent;
+            while (parent != null) {
+                if (node == parent.left) {
+                    return parent;
+                } else {
+                    node = parent;
+                    parent = node.parent;
+                }
+            }
+            return null;
+        }
     }
 
     private int compare(E insert, E current) {
@@ -283,23 +393,43 @@ public class BinarySearchTree<E> implements BinaryTreeInfo {
     }
 
     public static void main(String[] args) {
-        /*int[] arr = { 7, 4, 9, 2, 5, 8, 11, 3, 12, 1 };
-        BinarySearchTree<Integer> tree = new BinarySearchTree<>(Collections.reverseOrder(Integer::compareTo));
+        int[] arr = { 7, 4, 9, 2, 5, 8, 11, 3, 12, 1 };
+        BinarySearchTree<Integer> bst = new BinarySearchTree<>(Integer::compareTo);
         for (int i : arr) {
-            tree.add(i);
+            bst.add(i);
         }
-        BinaryTrees.print(tree);*/
+        BinaryTrees.println(bst);
 
-        Node root = new Node(1);
-        root.left = new Node(2);
-        root.right = new Node(3);
-        root.left.left = new Node(4);
-        root.left.right = new Node(5);
-        root.right.left = new Node(6);
-        root.right.right = new Node(7);
-        root.left.left.left = new Node(8);
-        root.left.right.left = new Node(9);
-        root.left.right.left.left = new Node(10);
+        // remove node that degree is 0
+//        bst.remove(1);
+//        bst.remove(3);
+//        bst.remove(12);
+//        BinaryTrees.println(bst);
+
+        // remove node that degree is 1
+//        bst.remove(11);
+//        BinaryTrees.println(bst);
+
+        // remove node that degree is 2
+//        bst.remove(4);
+//        bst.remove(9);
+//        BinaryTrees.println(bst);
+
+        // remove root
+        bst.remove(7);
+        BinaryTrees.println(bst);
+
+
+//        Node root = new Node(1);
+//        root.left = new Node(2);
+//        root.right = new Node(3);
+//        root.left.left = new Node(4);
+//        root.left.right = new Node(5);
+//        root.right.left = new Node(6);
+//        root.right.right = new Node(7);
+//        root.left.left.left = new Node(8);
+//        root.left.right.left = new Node(9);
+//        root.left.right.left.left = new Node(10);
 
 //        preOrderUnRecur(root);
 //        inOrderUnRecur(root);
@@ -307,7 +437,7 @@ public class BinarySearchTree<E> implements BinaryTreeInfo {
 //        System.out.println(height(root));
 //        System.out.println(heightUnRecur(root));
 //        System.out.println(isCompleteBinaryTreeUnRecur(root));
-        levelOrder(root);
+//        levelOrder(root);
 
     }
 
