@@ -20,7 +20,7 @@ import static java.util.Objects.isNull;
  */
 public class BinarySearchTree<E> implements BinaryTreeInfo {
 
-    private Node<E>       root;
+    protected Node<E>       root;
 
     private int           size;
 
@@ -38,8 +38,9 @@ public class BinarySearchTree<E> implements BinaryTreeInfo {
         nonNullCheck(element);
 
         if (root == null) {
-            root = new Node<>(element, null);
+            root = createNode(element, null);
             size++;
+            afterAdd(root);
             return;
         }
 
@@ -54,13 +55,22 @@ public class BinarySearchTree<E> implements BinaryTreeInfo {
                 return;
             }
         }
-        Node<E> node = new Node<>(element, parent);
+        Node<E> node = createNode(element, parent);
         if (compare > 0) {
             parent.right = node;
         } else {
             parent.left = node;
         }
         size++;
+        afterAdd(node);
+    }
+
+    protected void afterAdd(Node<E> node) {
+
+    }
+
+    protected Node<E> createNode(E element, Node<E> parent) {
+        return new Node<>(element, parent);
     }
 
     public void remove(E element) {
@@ -103,6 +113,11 @@ public class BinarySearchTree<E> implements BinaryTreeInfo {
                 node.parent.left = null;
             }
         }
+        afterRemove(node);
+    }
+
+    protected void afterRemove(Node<E> node) {
+        // let auto-balance bst overwrite the method to balance the tree
     }
 
     private boolean isRoot(Node<E> node) {
@@ -208,7 +223,7 @@ public class BinarySearchTree<E> implements BinaryTreeInfo {
         return ((Node<E>) node).element;
     }
 
-    private static class Node<E> {
+    protected static class Node<E> {
         E       element;
         Node<E> left;
         Node<E> right;
