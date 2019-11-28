@@ -9,12 +9,27 @@ package top.zhenganwen.learn.algorithm.datastructure.tree;
 
 import top.zhenganwen.learn.algorithm.commons.printer.BinaryTrees;
 
+import java.util.Comparator;
+
 /**
  * @author zhenganwen
  * @date 2019/11/25 13:46
  */
-public class AVLTree<E> extends BinarySearchTree<E> {
+public class AVLTree<E> extends BBST<E> {
 
+    public AVLTree() {
+
+    }
+
+    public AVLTree(Comparator<E> comparator) {
+        this.comparator = comparator;
+    }
+
+    /**
+     * just need once rebalance
+     *
+     * @param node
+     */
     @Override
     protected void afterAdd(Node<E> node) {
         while ((node = node.parent) != null) {
@@ -32,6 +47,9 @@ public class AVLTree<E> extends BinarySearchTree<E> {
      * this depends on the height of right child's left height when remove left child's node
      * and the height of left child's right height when remove right child's node.
      * what's more, this time rebalance maybe cause the ancestor's unbalance.
+     * <p>
+     * maybe need O(logn) times rebalance. see red-black tree {@link RBTree}
+     *
      * @param node
      */
     @Override
@@ -46,7 +64,9 @@ public class AVLTree<E> extends BinarySearchTree<E> {
     }
 
     /**
+     * see {@link this#rebalance)}
      * 平衡方案一：左旋右旋分开来做
+     *
      * @param node
      */
     private void rebalance2(Node<E> node) {
@@ -75,7 +95,9 @@ public class AVLTree<E> extends BinarySearchTree<E> {
     }
 
     /**
+     * see {@link this#rebalance2}
      * 平衡方案二：从四种变换中抽离出通用的逻辑
+     *
      * @param node
      */
     private void rebalance(Node<E> node) {
@@ -158,137 +180,23 @@ public class AVLTree<E> extends BinarySearchTree<E> {
         }
     }
 
+    @Override
+    protected void afterRotate(Node<E> node, Node<E> child) {
+        super.afterRotate(node, child);
+        ((AVLNode) node).updateHeight();
+        ((AVLNode) child).updateHeight();
+    }
+
+    @Override
+    protected void rotate(Node<E> r, Node<E> a, Node<E> b, Node<E> c, Node<E> d, Node<E> e, Node<E> f, Node<E> g) {
+        super.rotate(r, a, b, c, d, e, f, g);
+        ((AVLNode) b).updateHeight();
+        ((AVLNode) f).updateHeight();
+        ((AVLNode) d).updateHeight();
+    }
+
     private AVLNode cast(Node node) {
         return (AVLNode) node;
-    }
-
-    /**
-     *
-     * LL
-     *
-     * inorder traversal: a b c d e f g
-     *                     |
-     *              _______f______
-     *             |             |
-     *         ____d____         g                  ____d____
-     *        |        |              ===>         |        |
-     *       _b_       e                          _b_      _f_
-     *      |  |                                 |  |     |  |
-     *      a  c                                 a  c     e  g
-     *
-     *
-     * RR
-     *
-     * inorder traversal: a b c d e f g
-     *            |
-     *        ____b____
-     *       |        |
-     *       a    ____d____                        ____d____
-     *           |        |          ===>         |        |
-     *           c       _f_                     _b_      _f_
-     *                  |  |                    |  |     |  |
-     *                  e  g                    a  c     e  g
-     *
-     * LR
-     *
-     * inorder traversal: a b c d e f g
-     *                  |
-     *            ______f_____
-     *           |           |
-     *        ___b___        g                  ____d____
-     *       |      |             ===>         |        |
-     *       a     _d_                        _b_      _f_
-     *            |  |                       |  |     |  |
-     *            c  e                       a  c     e  g
-     *
-     *
-     * RL
-     *
-     * inorder traversal: a b c d e f g
-     *             |
-     *       ______b______
-     *      |            |
-     *      a         ___f___                  ____d____
-     *               |      |    ===>         |        |
-     *              _d_     g                _b_      _f_
-     *             |  |                     |  |     |  |
-     *             c  e                     a  c     e  g
-     *
-     *
-     * @param r the root node of the child tree
-     * @param a
-     * @param b
-     * @param c
-     * @param d
-     * @param e
-     * @param f
-     * @param g
-     */
-    private void rotate(
-            AVLNode r,
-            AVLNode a,AVLNode b, AVLNode c,
-            AVLNode d,
-            AVLNode e, AVLNode f, AVLNode g
-    ) {
-        // d -> new root of the child tree
-        d.parent = r.parent;
-        if (r.parent == null) root = d;
-        else if (r.isLeftChildOf(r.parent)) r.parent.left = d;
-        else  r.parent.right = d;
-
-        // a-b-c
-        b.left = a;
-        b.right = c;
-        if (a != null) a.parent = b;
-        if (c != null) c.parent = b;
-        b.updateHeight();
-
-        // e-f-g
-        f.left = e;
-        f.right = g;
-        if (e != null) e.parent = f;
-        if (g != null) g.parent = f;
-        f.updateHeight();
-
-        // b-d-f
-        d.left = b;
-        d.right = f;
-        b.parent = d;
-        f.parent = d;
-        d.updateHeight();
-    }
-
-    private void rotateLeft(AVLNode node) {
-        AVLNode child = (AVLNode) node.right;
-        // rotate left
-        node.right = child.left;
-        child.left = node;
-        afterRotate(node, child);
-    }
-
-    private void afterRotate(AVLNode node, AVLNode child) {
-        // link parent
-        child.parent = node.parent;
-        if (node.parent == null)
-            root = child;
-        else if (node.isLeftChildOf(node.parent))
-            node.parent.left = child;
-        else
-            node.parent.right = child;
-        node.parent = child;
-        if (node.right != null)
-            node.right.parent = node;
-        // update height
-        node.updateHeight();
-        child.updateHeight();
-    }
-
-    private void rotateRight(AVLNode node) {
-        AVLNode child = (AVLNode) node.left;
-        // rotate right
-        node.left = child.right;
-        child.right = node;
-        afterRotate(node, child);
     }
 
     private AVLNode getTallerChild(AVLNode node) {
@@ -341,19 +249,16 @@ public class AVLTree<E> extends BinarySearchTree<E> {
             return balanceFactor() <= 1;
         }
 
-        boolean isLeftChildOf(Node node) {
-            return this == node.left;
+        @Override
+        public String toString() {
+            return element.toString() + "(" + (parent == null ? "null" : parent.element) + ")";
         }
     }
 
     public static void main(String[] args) {
         AVLTree tree = new AVLTree();
-        for (int i = 0; i < 100; i++) {
-            tree.add(i);
-        }
-        BinaryTrees.println(tree);
         for (int i = 0; i < 50; i++) {
-            tree.remove(i);
+            tree.add(i);
         }
         BinaryTrees.println(tree);
 

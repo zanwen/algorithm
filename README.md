@@ -133,7 +133,7 @@
 
    >  如果下溢调整时，扯下一个父节点元素之后导致父节点没有元素了，此时树的高度减一
    
-9. 依序添加1~22这22个元素步骤图：
+9. 依序向4阶B树（2-3-4树）中添加1~22这22个元素步骤图：
 
    ![10-52-49.png](http://ww1.sinaimg.cn/large/006zweohgy1g9dkhr9bfrj314n0lu40s.jpg)
 
@@ -149,5 +149,341 @@
 
     ![11-41-17.png](http://ww1.sinaimg.cn/large/006zweohgy1g9dlt270dlj31490mh408.jpg)
 
-    
+## 红黑树
+
+### 红黑树的性质
+
+![11-52-26.png](http://ww1.sinaimg.cn/large/006zweohgy1g9dm3jsogzj30qf06rdik.jpg)
+
+上图中的树并不是一棵红黑色，因为绿色路径上只有两个黑色节点，而其他红色路径有3个黑色节点，不符合性质5
+
+### 红黑树 VS 2-3-4树
+
+![12-39-46.png](http://ww1.sinaimg.cn/large/006zweohgy1g9dngs8m86j30qf0btwi5.jpg)
+
+当B树叶子节点元素分别为：红黑红、黑红、红黑、黑。（将红黑树当做2-3-4树来看，只有黑色节点才能独立成为一个B树节点，且其左右红色子节点可以融入该B树节点中）
+
+![14-30-03.png](http://ww1.sinaimg.cn/large/006zweohgy1g9dr5aq4nvj30px096myz.jpg)
+
+### 添加元素
+
+#### 染成红色添加到叶子节点中
+
+![14-30-24.png](http://ww1.sinaimg.cn/large/006zweohgy1g9dr5as961j30p7091dhw.jpg)
+
+新元素的定位逻辑与BST一致，需要注意的是添加之后的调整逻辑。
+
+#### 分情况讨论
+
+![14-30-37.png](http://ww1.sinaimg.cn/large/006zweohgy1g9dr5b7htfj30pp0c6q6b.jpg)
+
+#### 1、添加第一个元素
+
+将节点染成黑色
+
+#### 2、添加的节点作为黑色节点的子节点
+
+染成红色添加即可，无需调整
+
+![15-05-50.png](http://ww1.sinaimg.cn/large/006zweohgy1g9drox9t90j30hk054755.jpg)
+
+#### 3、添加的节点作为红色节点的子节点，但无需上溢
+
+##### LL/RR，单旋
+
+![14-30-57.png](http://ww1.sinaimg.cn/large/006zweohgy1g9dr5bh6rlj30q80bgdig.jpg)
+
+##### RL/LR，双旋
+
+![14-31-07.png](http://ww1.sinaimg.cn/large/006zweohgy1g9dr5bg9epj30qg0b8goa.jpg)
+
+#### 4、添加的节点作为红色的子节点，且需上溢
+
+##### LL上溢
+
+![14-45-03.png](http://ww1.sinaimg.cn/large/006zweohgy1g9dr5arrikj30qb0cagoo.jpg)
+
+##### RR上溢
+
+![14-45-18.png](http://ww1.sinaimg.cn/large/006zweohgy1g9dr5aqgk8j30qf0c776y.jpg)
+
+##### LR上溢
+
+![14-45-28.png](http://ww1.sinaimg.cn/large/006zweohgy1g9dr5aybd6j30qa0buwh5.jpg)
+
+##### RL上溢
+
+![14-45-54.png](http://ww1.sinaimg.cn/large/006zweohgy1g9dr5bik71j30qd0bv417.jpg)
+
+#### 代码实现
+
+##### 二叉搜索树
+
+```java
+package top.zhenganwen.learn.algorithm.datastructure.tree;
+
+import top.zhenganwen.learn.algorithm.commons.printer.BinaryTreeInfo;
+import top.zhenganwen.learn.algorithm.commons.printer.BinaryTrees;
+
+import java.util.*;
+
+import static java.util.Objects.isNull;
+
+/**
+ * @author zhenganwen
+ * @date 2019/11/6 17:48
+ */
+public class BinarySearchTree<E> implements BinaryTreeInfo {
+
+    protected Node<E>       root;
+
+    private int           size;
+
+    protected Comparator<E> comparator;
+
+    public BinarySearchTree() {
+
+    }
+
+    public BinarySearchTree(Comparator<E> comparator) {
+        this.comparator = comparator;
+    }
+
+    public void add(E element) {
+        nonNullCheck(element);
+
+        if (root == null) {
+            root = createNode(element, null);
+            size++;
+            afterAdd(root);
+            return;
+        }
+
+        Node<E> parent = root, cur = root;
+        int compare = 0;
+        while (cur != null) {
+            parent = cur;
+            compare = compare(element, cur.element);
+            cur = compare > 0 ? cur.right : compare < 0 ? cur.left : cur;
+            if (cur == parent) {
+                cur.element = element;
+                return;
+            }
+        }
+        Node<E> node = createNode(element, parent);
+        if (compare > 0) {
+            parent.right = node;
+        } else {
+            parent.left = node;
+        }
+        size++;
+        afterAdd(node);
+    }
+
+    protected void afterAdd(Node<E> node) {
+
+    }
+
+    protected Node<E> createNode(E element, Node<E> parent) {
+        return new Node<>(element, parent);
+    }
+
+    public void remove(E element) {
+        remove(node(element));
+    }
+
+    private void remove(Node<E> node) {
+        if (node == null)
+            return;
+
+        size--;
+        if (hasTwoChild(node)) {
+            // the node's degree is 2, use node's predecessor/successor's element
+            // cover the node, and then delete the predecessor/successor
+            Node<E> successor = Objects.requireNonNull(successor(node));
+            node.element = successor.element;
+            node = successor;
+        }
+
+        // reach here, the degree of the node is possible only 0 or 1
+        // that is to say, the node only has one child
+        Node replacement = node.left == null ? node.right : node.left;
+        if (replacement != null) {
+            // the node's degree is 1
+            replacement.parent = node.parent;
+            if (isRoot(node)) {
+                root = replacement;
+            } else if (compare(node.element, node.parent.element) >= 0) {
+                node.parent.right = replacement;
+            } else {
+                node.parent.left = replacement;
+            }
+        } else {
+            // the node is leaf node
+            if (isRoot(node)) {
+                root = null;
+            } else if (compare(node.element, node.parent.element) >= 0) {
+                node.parent.right = null;
+            } else {
+                node.parent.left = null;
+            }
+        }
+        afterRemove(node);
+    }
+
+    protected void afterRemove(Node<E> node) {
+        // let auto-balance bst overwrite the method to balance the tree
+    }
+
+    private boolean isRoot(Node<E> node) {
+        return node.parent == null;
+    }
+
+    public boolean contains(E element) {
+        return node(element) != null;
+    }
+
+    public void clear() {
+        root = null;
+        size = 0;
+    }
+
+    public Node node(E element) {
+        Node<E> node = root;
+        while (node != null) {
+            int compare = compare(element, node.element);
+            if (compare == 0)
+                return node;
+            else if (compare > 0) {
+                node = node.right;
+            } else {
+                node = node.left;
+            }
+        }
+        return null;
+    }
+
+    private Node predecessor(Node<E> node) {
+        if (node.left != null) {
+            node = node.left;
+            while (node.right != null) {
+                node = node.right;
+            }
+            return node;
+        } else {
+            Node parent = node.parent;
+            while (parent != null) {
+                if (node == parent.right) {
+                    return parent;
+                } else {
+                    node = parent;
+                    parent = node.parent;
+                }
+            }
+            return null;
+        }
+    }
+
+    private Node successor(Node<E> node) {
+        if (node.right != null) {
+            node = node.right;
+            while (node.left != null) {
+                node = node.left;
+            }
+            return node;
+        } else {
+            Node parent = node.parent;
+            while (parent != null) {
+                if (node == parent.left) {
+                    return parent;
+                } else {
+                    node = parent;
+                    parent = node.parent;
+                }
+            }
+            return null;
+        }
+    }
+
+    private int compare(E insert, E current) {
+        if (comparator != null) {
+            return Objects.compare(insert, current, comparator);
+        }
+        return ((Comparable<E>) insert).compareTo(current);
+    }
+
+    private void nonNullCheck(E element) {
+        if (isNull(element)) {
+            throw new IllegalArgumentException("element must not be null");
+        }
+    }
+
+    @Override
+    public Object root() {
+        return root;
+    }
+
+    @Override
+    public Object left(Object node) {
+        return ((Node<E>) node).left;
+    }
+
+    @Override
+    public Object right(Object node) {
+        return ((Node<E>) node).right;
+    }
+
+    @Override
+    public Object string(Object node) {
+        return node;
+    }
+
+    protected static class Node<E> {
+        E       element;
+        Node<E> left;
+        Node<E> right;
+        Node<E> parent;
+
+        Node(E element, Node<E> parent) {
+            this(element);
+            this.parent = parent;
+        }
+
+        Node(E element) {
+            this.element = element;
+        }
+
+        boolean isLeftChildOf(Node node) {
+            return this == node.left;
+        }
+
+        @Override
+        public String toString() {
+            return "Node{" +
+                    "element=" + element +
+                    '}';
+        }
+    }
+
+    private static boolean oneIsChildOfAnother(Node one, Node another) {
+        return one != null && (one == another.left || one == another.right);
+    }
+
+    private static boolean isLeaf(Node node) {
+        return node.left == null && node.right == null;
+    }
+
+}
+```
+
+
+
+### 删除元素
+
+![14-46-19.png](http://ww1.sinaimg.cn/large/006zweohgy1g9dr5aqc2sj30i706rmy5.jpg)
+
+
+
+
+
 

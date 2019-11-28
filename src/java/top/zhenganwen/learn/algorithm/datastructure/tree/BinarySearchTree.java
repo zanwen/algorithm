@@ -24,7 +24,7 @@ public class BinarySearchTree<E> implements BinaryTreeInfo {
 
     private int           size;
 
-    private Comparator<E> comparator;
+    protected Comparator<E> comparator;
 
     public BinarySearchTree() {
 
@@ -220,7 +220,7 @@ public class BinarySearchTree<E> implements BinaryTreeInfo {
 
     @Override
     public Object string(Object node) {
-        return ((Node<E>) node).element;
+        return node;
     }
 
     protected static class Node<E> {
@@ -236,6 +236,10 @@ public class BinarySearchTree<E> implements BinaryTreeInfo {
 
         Node(E element) {
             this.element = element;
+        }
+
+        boolean isLeftChildOf(Node node) {
+            return this == node.left;
         }
 
         @Override
