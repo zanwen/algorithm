@@ -97,7 +97,7 @@
 
 5. 添加元素：新添加的元素必定会添加到叶子节点中
 
-6. 上溢：当向某个节点添加元素导致该节点元素个数超出限制时，需将该节点中间元素（从左到右第 m>>1 个）沿父指针向上移动，并将左右两边的元素作为该元素的左右子节点
+6. **上溢：当向某个节点添加元素导致该节点元素个数超出限制**。此时需将该节点中间元素（从左到右第 m>>1 个）沿父指针向上移动，并将左右两边的元素作为该元素的左右子节点
 
    ![Snipaste_2019-11-26_16-11-06.png](http://ww1.sinaimg.cn/large/006zweohgy1g9bic6xp2ej306s0cmjrs.jpg)
 
@@ -112,7 +112,7 @@
 
 8. 下溢：
 
-   1. 下溢发生在某元素后，该元素所在节点元素个数变为（ ⌊m/2⌋ -2）
+   1. 下溢：**删除某元素后，该元素所在节点元素个数变为（ ⌊m/2⌋ -2）**
 
    2. 如果下溢节点有元素个数为（⌊m/2⌋）或以上的同层相邻节点，可从该节点“借”一个元素
 
@@ -161,7 +161,7 @@
 
 ![12-39-46.png](http://ww1.sinaimg.cn/large/006zweohgy1g9dngs8m86j30qf0btwi5.jpg)
 
-当B树叶子节点元素分别为：红黑红、黑红、红黑、黑。（将红黑树当做2-3-4树来看，只有黑色节点才能独立成为一个B树节点，且其左右红色子节点可以融入该B树节点中）
+当B树叶子节点元素分别为：红黑红、黑红、红黑、黑。（**将红黑树当做2-3-4树来看，只有黑色节点才能独立成为一个B树节点，且其左右红色子节点可以融入该B树节点中**）
 
 ![14-30-03.png](http://ww1.sinaimg.cn/large/006zweohgy1g9dr5aq4nvj30px096myz.jpg)
 
@@ -216,6 +216,8 @@
 ![14-45-54.png](http://ww1.sinaimg.cn/large/006zweohgy1g9dr5bik71j30qd0bv417.jpg)
 
 #### 代码实现
+
+> github: https://github.com/zanwen/algorithm/blob/master/src/java/top/zhenganwen/learn/algorithm/datastructure/tree/RBTree.java 
 
 ##### 二叉搜索树
 
@@ -476,14 +478,1629 @@ public class BinarySearchTree<E> implements BinaryTreeInfo {
 }
 ```
 
+##### 自平衡的二叉搜索树
 
+```java
+package top.zhenganwen.learn.algorithm.datastructure.tree;
+
+import java.util.Comparator;
+
+/**
+ * @author zhenganwen
+ * @date 2019/11/28/028 15:53
+ */
+public class BBST<E> extends BinarySearchTree<E> {
+
+    public BBST() {
+
+    }
+
+    public BBST(Comparator<E> comparator) {
+        this.comparator = comparator;
+    }
+
+    protected void rotateLeft(Node<E> node) {
+        Node<E> child = node.right;
+        // rotate left
+        node.right = child.left;
+        child.left = node;
+        afterRotate(node, child);
+    }
+
+    protected void afterRotate(Node<E> node, Node<E> child) {
+        // link parent
+        child.parent = node.parent;
+        if (node.parent == null)
+            root = child;
+        else if (node.isLeftChildOf(node.parent))
+            node.parent.left = child;
+        else
+            node.parent.right = child;
+        node.parent = child;
+        if (node == child.right && node.left != null)
+            node.left.parent = node;
+        if (node == child.left && node.right != null)
+            node.right.parent = node;
+    }
+
+    protected void rotateRight(Node<E> node) {
+        Node<E> child = node.left;
+        // rotate right
+        node.left = child.right;
+        child.right = node;
+        afterRotate(node, child);
+    }
+
+    /**
+     *
+     * LL
+     *
+     * inorder traversal: a b c d e f g
+     *                     |
+     *              _______f______
+     *             |             |
+     *         ____d____         g                  ____d____
+     *        |        |              ===>         |        |
+     *       _b_       e                          _b_      _f_
+     *      |  |                                 |  |     |  |
+     *      a  c                                 a  c     e  g
+     *
+     *
+     * RR
+     *
+     * inorder traversal: a b c d e f g
+     *            |
+     *        ____b____
+     *       |        |
+     *       a    ____d____                        ____d____
+     *           |        |          ===>         |        |
+     *           c       _f_                     _b_      _f_
+     *                  |  |                    |  |     |  |
+     *                  e  g                    a  c     e  g
+     *
+     * LR
+     *
+     * inorder traversal: a b c d e f g
+     *                  |
+     *            ______f_____
+     *           |           |
+     *        ___b___        g                  ____d____
+     *       |      |             ===>         |        |
+     *       a     _d_                        _b_      _f_
+     *            |  |                       |  |     |  |
+     *            c  e                       a  c     e  g
+     *
+     *
+     * RL
+     *
+     * inorder traversal: a b c d e f g
+     *             |
+     *       ______b______
+     *      |            |
+     *      a         ___f___                  ____d____
+     *               |      |    ===>         |        |
+     *              _d_     g                _b_      _f_
+     *             |  |                     |  |     |  |
+     *             c  e                     a  c     e  g
+     *
+     *
+     * @param r the root node of the child tree
+     * @param a
+     * @param b
+     * @param c
+     * @param d
+     * @param e
+     * @param f
+     * @param g
+     */
+    protected void rotate(
+            Node<E> r,
+            Node<E> a, Node<E> b, Node<E> c,
+            Node<E> d,
+            Node<E> e, Node<E> f, Node<E> g
+    ) {
+        // d -> new root of the child tree
+        d.parent = r.parent;
+        if (r.parent == null)
+            root = d;
+        else if (r.isLeftChildOf(r.parent))
+            r.parent.left = d;
+        else
+            r.parent.right = d;
+
+        // a-b-c
+        b.left = a;
+        b.right = c;
+        if (a != null)
+            a.parent = b;
+        if (c != null)
+            c.parent = b;
+
+
+        // e-f-g
+        f.left = e;
+        f.right = g;
+        if (e != null)
+            e.parent = f;
+        if (g != null)
+            g.parent = f;
+
+
+        // b-d-f
+        d.left = b;
+        d.right = f;
+        b.parent = d;
+        f.parent = d;
+    }
+}
+```
+
+##### 红黑树
+
+```java
+package top.zhenganwen.learn.algorithm.datastructure.tree;
+
+import top.zhenganwen.learn.algorithm.commons.printer.BinaryTrees;
+
+import java.util.Comparator;
+
+/**
+ * @author zhenganwen
+ * @date 2019/11/28/028 15:52
+ */
+public class RBTree<E> extends BBST<E> {
+
+    private static boolean RED   = false;
+    private static boolean BLACK = true;
+
+    public RBTree() {
+
+    }
+
+    public RBTree(Comparator<E> comparator) {
+        this.comparator = comparator;
+    }
+
+    @Override
+    protected void afterAdd(Node<E> node) {
+        // the insert node is root node or node overflows to top
+        if (node.parent == null) {
+            darken(node);
+            return;
+        }
+        // the node is leaf node
+        RBNode<E> parent = (RBNode<E>) node.parent;
+        // 1. black parent
+        if (parent.color == BLACK) {
+            // redden it -> default red color
+            return;
+        }
+        // 2. red parent, and grand must exist
+        RBNode<E> uncle = sibling(parent);
+        RBNode<E> grand = (RBNode<E>) parent.parent;
+        if (isRed(uncle)) {
+            // 2.1 overflow
+            darken(parent);
+            darken(uncle);
+            redden(grand);
+            afterAdd(grand);
+            return;
+        }
+        // 2.2 uncle is null or black
+        if (parent.isLeftChildOf(grand)) {
+            if (node.isLeftChildOf(parent)) {
+                // LL
+                darken(parent);
+                redden(grand);
+                rotateRight(grand);
+            } else {
+                // LR
+                darken(node);
+                redden(grand);
+                rotateLeft(parent);
+                rotateRight(grand);
+            }
+        } else {
+            if (node.isLeftChildOf(parent)) {
+                // RL
+                darken(node);
+                redden(grand);
+                rotateRight(parent);
+                rotateLeft(grand);
+            } else {
+                // RR
+                redden(grand);
+                darken(parent);
+                rotateLeft(grand);
+            }
+        }
+    }
+
+    private RBNode<E> color(Node<E> node, boolean color) {
+        RBNode<E> n = (RBNode<E>) node;
+        n.color = color;
+        return n;
+    }
+
+    private RBNode redden(Node<E> node) {
+        return color(node, RED);
+    }
+
+    private RBNode darken(Node<E> node) {
+        return color(node, BLACK);
+    }
+
+    private boolean isRed(Node<E> node) {
+        return node != null && ((RBNode<E>) node).color == RED;
+    }
+
+    private RBNode<E> sibling(Node<E> node) {
+        if (node.parent == null) {
+            return null;
+        }
+        if (node.isLeftChildOf(node.parent)) {
+            return (RBNode<E>) node.parent.right;
+        } else {
+            return (RBNode<E>) node.parent.left;
+        }
+    }
+
+    @Override
+    protected Node<E> createNode(E element, Node<E> parent) {
+        return new RBNode<>(element, parent);
+    }
+
+    private class RBNode<E> extends Node<E> {
+        boolean color = RED;
+
+        RBNode(E element, Node<E> parent) {
+            super(element, parent);
+        }
+
+        @Override
+        public String toString() {
+            String s = "";
+            if (color == RED) {
+                s += "R_";
+            }
+            return s + element + "(" + (parent == null ? "null" : parent.element) + ")";
+        }
+    }
+
+    public static void main(String[] args) {
+        Integer[] arr = new Integer[]{
+                89, 90, 40, 21, 81, 58, 79, 85, 98, 12, 15, 91, 96, 69, 18, 66, 47, 43, 82
+        };
+        RBTree<Integer> rbt = new RBTree<>();
+        for (Integer i : arr) {
+            System.out.println("【" + i + "】");
+            rbt.add(i);
+            BinaryTrees.println(rbt);
+            System.out.println("=================================================");
+        }
+    }
+}
+```
 
 ### 删除元素
 
+#### 前提
+
 ![14-46-19.png](http://ww1.sinaimg.cn/large/006zweohgy1g9dr5aqc2sj30i706rmy5.jpg)
 
+#### 1、删除红色节点
+
+![11-17-32.png](http://ww1.sinaimg.cn/large/006zweohgy1g9kiudzy4yj30ht07pwfn.jpg)
+
+#### 2、删除黑色节点
+
+![11-17-39.png](http://ww1.sinaimg.cn/large/006zweohgy1g9kiue0hx0j30qj08dtaz.jpg)
+
+#### 2.1、删除有一个红色孩子的黑色节点
+
+![11-17-45.png](http://ww1.sinaimg.cn/large/006zweohgy1g9kiue37z1j30nc0b476h.jpg)
+
+#### 2.2、删除没有红色孩子的黑色节点
+
+##### 2.2.1、被删除节点的兄弟节点为黑色
+
+![11-17-52.png](http://ww1.sinaimg.cn/large/006zweohgy1g9kiue430ej30q70dzae6.jpg)
+
+---
+
+![11-18-37.png](http://ww1.sinaimg.cn/large/006zweohgy1g9kiue20q1j30pw0dptbt.jpg)
 
 
 
+##### 2.2.2、被删除节点的兄弟节点为红色
+
+![11-18-43.png](http://ww1.sinaimg.cn/large/006zweohgy1g9kiue2lv2j30ny0dc41w.jpg)
+
+#### 代码实现
+
+##### BST
+
+```java
+package top.zhenganwen.learn.algorithm.datastructure.tree;
+
+import top.zhenganwen.learn.algorithm.commons.printer.BinaryTreeInfo;
+import top.zhenganwen.learn.algorithm.commons.printer.BinaryTrees;
+
+import java.util.*;
+
+import static java.util.Objects.isNull;
+
+/**
+ * @author zhenganwen
+ * @date 2019/11/6 17:48
+ */
+public class BinarySearchTree<E> implements BinaryTreeInfo {
+
+    protected Node<E>       root;
+
+    private int           size;
+
+    protected Comparator<E> comparator;
+
+    public BinarySearchTree() {
+
+    }
+
+    public BinarySearchTree(Comparator<E> comparator) {
+        this.comparator = comparator;
+    }
+
+    public void add(E element) {
+        nonNullCheck(element);
+
+        if (root == null) {
+            root = createNode(element, null);
+            size++;
+            afterAdd(root);
+            return;
+        }
+
+        Node<E> parent = root, cur = root;
+        int compare = 0;
+        while (cur != null) {
+            parent = cur;
+            compare = compare(element, cur.element);
+            cur = compare > 0 ? cur.right : compare < 0 ? cur.left : cur;
+            if (cur == parent) {
+                cur.element = element;
+                return;
+            }
+        }
+        Node<E> node = createNode(element, parent);
+        if (compare > 0) {
+            parent.right = node;
+        } else {
+            parent.left = node;
+        }
+        size++;
+        afterAdd(node);
+    }
+
+    protected void afterAdd(Node<E> node) {
+
+    }
+
+    protected Node<E> createNode(E element, Node<E> parent) {
+        return new Node<>(element, parent);
+    }
+
+    public void remove(E element) {
+        remove(node(element));
+    }
+
+    private void remove(Node<E> node) {
+        if (node == null)
+            return;
+
+        size--;
+        if (hasTwoChild(node)) {
+            // the node's degree is 2, use node's predecessor/successor's element
+            // cover the node, and then delete the predecessor/successor
+            Node<E> successor = Objects.requireNonNull(successor(node));
+            node.element = successor.element;
+            node = successor;
+        }
+
+        // reach here, the degree of the node is only possible 0 or 1
+        // that is to say, the node has no more than one child
+        Node replacement = node.left == null ? node.right : node.left;
+        if (replacement != null) {
+            // the node's degree is 1
+            replacement.parent = node.parent;
+            if (isRoot(node)) {
+                root = replacement;
+            } else if (compare(node.element, node.parent.element) >= 0) {
+                node.parent.right = replacement;
+            } else {
+                node.parent.left = replacement;
+            }
+            afterRemove(node, replacement);
+        } else {
+            // the node is leaf node
+            if (isRoot(node)) {
+                root = null;
+            } else if (compare(node.element, node.parent.element) >= 0) {
+                node.parent.right = null;
+            } else {
+                node.parent.left = null;
+            }
+            afterRemove(node, null);
+        }
+    }
+
+    protected void afterRemove(Node<E> node, Node<E> replacement) {
+        // let auto-balance bst overwrite the method to rebalance the tree
+    }
+
+    private boolean isRoot(Node<E> node) {
+        return node.parent == null;
+    }
+
+    public boolean contains(E element) {
+        return node(element) != null;
+    }
+
+    public void clear() {
+        root = null;
+        size = 0;
+    }
+
+    public Node node(E element) {
+        Node<E> node = root;
+        while (node != null) {
+            int compare = compare(element, node.element);
+            if (compare == 0)
+                return node;
+            else if (compare > 0) {
+                node = node.right;
+            } else {
+                node = node.left;
+            }
+        }
+        return null;
+    }
+
+    private Node predecessor(Node<E> node) {
+        if (node.left != null) {
+            node = node.left;
+            while (node.right != null) {
+                node = node.right;
+            }
+            return node;
+        } else {
+            Node parent = node.parent;
+            while (parent != null) {
+                if (node == parent.right) {
+                    return parent;
+                } else {
+                    node = parent;
+                    parent = node.parent;
+                }
+            }
+            return null;
+        }
+    }
+
+    private Node successor(Node<E> node) {
+        if (node.right != null) {
+            node = node.right;
+            while (node.left != null) {
+                node = node.left;
+            }
+            return node;
+        } else {
+            Node parent = node.parent;
+            while (parent != null) {
+                if (node == parent.left) {
+                    return parent;
+                } else {
+                    node = parent;
+                    parent = node.parent;
+                }
+            }
+            return null;
+        }
+    }
+
+    private int compare(E insert, E current) {
+        if (comparator != null) {
+            return Objects.compare(insert, current, comparator);
+        }
+        return ((Comparable<E>) insert).compareTo(current);
+    }
+
+    private void nonNullCheck(E element) {
+        if (isNull(element)) {
+            throw new IllegalArgumentException("element must not be null");
+        }
+    }
+
+    @Override
+    public Object root() {
+        return root;
+    }
+
+    @Override
+    public Object left(Object node) {
+        return ((Node<E>) node).left;
+    }
+
+    @Override
+    public Object right(Object node) {
+        return ((Node<E>) node).right;
+    }
+
+    @Override
+    public Object string(Object node) {
+        return node;
+    }
+
+    protected static class Node<E> {
+        E       element;
+        Node<E> left;
+        Node<E> right;
+        Node<E> parent;
+
+        Node(E element, Node<E> parent) {
+            this(element);
+            this.parent = parent;
+        }
+
+        Node(E element) {
+            this.element = element;
+        }
+
+        boolean isLeftChildOf(Node node) {
+            return this == node.left;
+        }
+
+        @Override
+        public String toString() {
+            return "Node{" +
+                    "element=" + element +
+                    '}';
+        }
+    }
+
+    public static void preOrderUnRecur(Node root) {
+        emptyTreeCheck(root);
+        Stack<Node> stack = new Stack<>();
+        StringBuilder stringBuilder = new StringBuilder();
+        stack.push(root);
+        while (!stack.isEmpty()) {
+            Node node = stack.pop();
+            stringBuilder.append(node.element).append(" ");
+            if (node.right != null) {
+                stack.push(node.right);
+            }
+            if (node.left != null) {
+                stack.push(node.left);
+            }
+        }
+        System.out.println(stringBuilder.toString());
+    }
+
+    private static void emptyTreeCheck(Node root) {
+        if (root == null) {
+            throw new IllegalArgumentException("empty tree");
+        }
+    }
+
+    public static void inOrderUnRecur(Node root) {
+        emptyTreeCheck(root);
+        StringBuilder sb = new StringBuilder();
+        Stack<Node> stack = new Stack<>();
+        while (root != null) {
+            stack.push(root);
+            root = root.left;
+            while (root == null) {
+                if (stack.isEmpty()) {
+                    break;
+                } else {
+                    Node node = stack.pop();
+                    sb.append(node.element).append(" ");
+                    root = node.right;
+                }
+            }
+        }
+        System.out.println(sb.toString());
+    }
+
+    private static void postOrderUnRecur(Node root) {
+        emptyTreeCheck(root);
+        StringBuilder stringBuilder = new StringBuilder();
+        Stack<Node> stack = new Stack<>();
+        stack.push(root);
+        Node lastAccess = null;
+        while (!stack.isEmpty()) {
+            Node node = stack.peek();
+            // 当来到的节点node是叶子节点或上次访问的节点是其子节点时,需要进行访问
+            if (isLeaf(node) || oneIsChildOfAnother(lastAccess, node)) {
+                stack.pop();
+                stringBuilder.append(node.element).append(" ");
+                lastAccess = node;
+            } else {
+                if (node.right != null) {
+                    stack.push(node.right);
+                }
+                if (node.left != null) {
+                    stack.push(node.left);
+                }
+            }
+        }
+        System.out.println(stringBuilder.toString());
+    }
+
+    public static void levelOrder(Node root) {
+        emptyTreeCheck(root);
+        StringBuilder stringBuilder = new StringBuilder();
+        LinkedList<Node> queue = new LinkedList<>();
+        queue.offer(root);
+        while (!queue.isEmpty()) {
+            Node node = queue.poll();
+            stringBuilder.append(node.element).append(" ");
+            if (node.left != null) {
+                queue.offer(node.left);
+            }
+            if (node.right != null) {
+                queue.offer(node.right);
+            }
+        }
+        System.out.println(stringBuilder.toString());
+    }
+
+    private static boolean oneIsChildOfAnother(Node one, Node another) {
+        return one != null && (one == another.left || one == another.right);
+    }
+
+    private static boolean isLeaf(Node node) {
+        return node.left == null && node.right == null;
+    }
+
+    public static int height(Node root) {
+        if (root == null) {
+            return 0;
+        }
+        return Math.max(height(root.left), height(root.right)) + 1;
+    }
+
+    public static int heightUnRecur(Node root) {
+        if (root == null) {
+            return 0;
+        }
+        Stack<Node> s1 = new Stack<>(), s2 = new Stack<>();
+        int height = 0;
+        s1.push(root);
+        while (!s1.isEmpty()) {
+            while (!s1.isEmpty()) {
+                Node node = s1.pop();
+                if (node.left != null) {
+                    s2.push(node.left);
+                }
+                if (node.right != null) {
+                    s2.push(node.right);
+                }
+            }
+            height++;
+            Stack tmp = s1;
+            s1 = s2;
+            s2 = tmp;
+        }
+        return height;
+    }
+
+    public static boolean isCompleteBinaryTreeUnRecur(Node root) {
+        if (root == null) {
+            return true;
+        }
+        boolean leafMode = false;
+        LinkedList<Node> queue = new LinkedList<>();
+        queue.add(root);
+        while (!queue.isEmpty()) {
+            Node node = queue.pollFirst();
+            if (leafMode) {
+                if (!isLeaf(node)) {
+                    return false;
+                }
+                continue;
+            }
+            if (hasTwoChild(node)) {
+                queue.addLast(node.left);
+                queue.addLast(node.right);
+            } else if (node.left == null && node.right != null) {
+                return false;
+            } else {
+                leafMode = true;
+                if (node.left != null) {
+                    queue.addLast(node.left);
+                }
+            }
+        }
+        return true;
+    }
+
+    private static boolean hasTwoChild(Node node) {
+        return node != null && node.left != null && node.right != null;
+    }
+
+    public static void main(String[] args) {
+        int[] arr = { 7, 4, 9, 2, 5, 8, 11, 3, 12, 1 };
+        BinarySearchTree<Integer> bst = new BinarySearchTree<>(Integer::compareTo);
+        for (int i : arr) {
+            bst.add(i);
+        }
+        BinaryTrees.println(bst);
+
+        // remove node that degree is 0
+//        bst.remove(1);
+//        bst.remove(3);
+//        bst.remove(12);
+//        BinaryTrees.println(bst);
+
+        // remove node that degree is 1
+//        bst.remove(11);
+//        BinaryTrees.println(bst);
+
+        // remove node that degree is 2
+//        bst.remove(4);
+//        bst.remove(9);
+//        BinaryTrees.println(bst);
+
+        // remove root
+        bst.remove(7);
+        BinaryTrees.println(bst);
 
 
+//        Node root = new Node(1);
+//        root.left = new Node(2);
+//        root.right = new Node(3);
+//        root.left.left = new Node(4);
+//        root.left.right = new Node(5);
+//        root.right.left = new Node(6);
+//        root.right.right = new Node(7);
+//        root.left.left.left = new Node(8);
+//        root.left.right.left = new Node(9);
+//        root.left.right.left.left = new Node(10);
+
+//        preOrderUnRecur(root);
+//        inOrderUnRecur(root);
+//        postOrderUnRecur(root);
+//        System.out.println(height(root));
+//        System.out.println(heightUnRecur(root));
+//        System.out.println(isCompleteBinaryTreeUnRecur(root));
+//        levelOrder(root);
+
+    }
+
+}
+```
+
+##### BBST
+
+```java
+package top.zhenganwen.learn.algorithm.datastructure.tree;
+
+import java.util.Comparator;
+
+/**
+ * @author zhenganwen
+ * @date 2019/11/28/028 15:53
+ */
+public class BBST<E> extends BinarySearchTree<E> {
+
+    public BBST() {
+
+    }
+
+    public BBST(Comparator<E> comparator) {
+        this.comparator = comparator;
+    }
+
+    protected void rotateLeft(Node<E> node) {
+        Node<E> child = node.right;
+        // rotate left
+        node.right = child.left;
+        child.left = node;
+        afterRotate(node, child);
+    }
+
+    protected void afterRotate(Node<E> node, Node<E> child) {
+        // link parent
+        child.parent = node.parent;
+        if (node.parent == null)
+            root = child;
+        else if (node.isLeftChildOf(node.parent))
+            node.parent.left = child;
+        else
+            node.parent.right = child;
+        node.parent = child;
+        if (node == child.right && node.left != null)
+            node.left.parent = node;
+        if (node == child.left && node.right != null)
+            node.right.parent = node;
+    }
+
+    protected void rotateRight(Node<E> node) {
+        Node<E> child = node.left;
+        // rotate right
+        node.left = child.right;
+        child.right = node;
+        afterRotate(node, child);
+    }
+
+    /**
+     *
+     * LL
+     *
+     * inorder traversal: a b c d e f g
+     *                     |
+     *              _______f______
+     *             |             |
+     *         ____d____         g                  ____d____
+     *        |        |              ===>         |        |
+     *       _b_       e                          _b_      _f_
+     *      |  |                                 |  |     |  |
+     *      a  c                                 a  c     e  g
+     *
+     *
+     * RR
+     *
+     * inorder traversal: a b c d e f g
+     *            |
+     *        ____b____
+     *       |        |
+     *       a    ____d____                        ____d____
+     *           |        |          ===>         |        |
+     *           c       _f_                     _b_      _f_
+     *                  |  |                    |  |     |  |
+     *                  e  g                    a  c     e  g
+     *
+     * LR
+     *
+     * inorder traversal: a b c d e f g
+     *                  |
+     *            ______f_____
+     *           |           |
+     *        ___b___        g                  ____d____
+     *       |      |             ===>         |        |
+     *       a     _d_                        _b_      _f_
+     *            |  |                       |  |     |  |
+     *            c  e                       a  c     e  g
+     *
+     *
+     * RL
+     *
+     * inorder traversal: a b c d e f g
+     *             |
+     *       ______b______
+     *      |            |
+     *      a         ___f___                  ____d____
+     *               |      |    ===>         |        |
+     *              _d_     g                _b_      _f_
+     *             |  |                     |  |     |  |
+     *             c  e                     a  c     e  g
+     *
+     *
+     * @param r the root node of the child tree
+     * @param a
+     * @param b
+     * @param c
+     * @param d
+     * @param e
+     * @param f
+     * @param g
+     */
+    protected void rotate(
+            Node<E> r,
+            Node<E> a, Node<E> b, Node<E> c,
+            Node<E> d,
+            Node<E> e, Node<E> f, Node<E> g
+    ) {
+        // d -> new root of the child tree
+        d.parent = r.parent;
+        if (r.parent == null)
+            root = d;
+        else if (r.isLeftChildOf(r.parent))
+            r.parent.left = d;
+        else
+            r.parent.right = d;
+
+        // a-b-c
+        b.left = a;
+        b.right = c;
+        if (a != null)
+            a.parent = b;
+        if (c != null)
+            c.parent = b;
+
+
+        // e-f-g
+        f.left = e;
+        f.right = g;
+        if (e != null)
+            e.parent = f;
+        if (g != null)
+            g.parent = f;
+
+
+        // b-d-f
+        d.left = b;
+        d.right = f;
+        b.parent = d;
+        f.parent = d;
+    }
+}
+```
+
+##### AVLTree
+
+```java
+package top.zhenganwen.learn.algorithm.datastructure.tree;
+
+import top.zhenganwen.learn.algorithm.commons.printer.BinaryTrees;
+
+import java.util.Comparator;
+
+/**
+ * @author zhenganwen
+ * @date 2019/11/25 13:46
+ */
+public class AVLTree<E> extends BBST<E> {
+
+    public AVLTree() {
+
+    }
+
+    public AVLTree(Comparator<E> comparator) {
+        this.comparator = comparator;
+    }
+
+    /**
+     * just need once rebalance
+     *
+     * @param node
+     */
+    @Override
+    protected void afterAdd(Node<E> node) {
+        while ((node = node.parent) != null) {
+            if (isBalanced(node)) {
+                updateHeight(node);
+            } else {
+                rebalance(node);
+                break;
+            }
+        }
+    }
+
+    /**
+     * remove the {@code node}, maybe cause the LL or RR situation generating,
+     * this depends on the height of right child's left height when remove left child's node
+     * and the height of left child's right height when remove right child's node.
+     * what's more, this time rebalance maybe cause the ancestor's unbalance.
+     * <p>
+     * maybe need O(logn) times rebalance. see red-black tree {@link RBTree}
+     *
+     * @param node
+     */
+    @Override
+    protected void afterRemove(Node<E> node, Node<E> replacement) {
+        while ((node = node.parent) != null) {
+            if (isBalanced(node)) {
+                updateHeight(node);
+            } else {
+                rebalance(node);
+            }
+        }
+    }
+
+    /**
+     * see {@link this#rebalance)}
+     * 平衡方案一：左旋右旋分开来做
+     *
+     * @param node
+     */
+    private void rebalance2(Node<E> node) {
+        AVLNode grand = (AVLNode) node;
+        AVLNode parent = getTallerChild(grand);
+        AVLNode child = getTallerChild(parent);
+        if (parent == grand.left) {
+            if (child == parent.left) {
+                // LL rotate right
+                rotateRight(grand);
+            } else {
+                // LR rotate left first and then rotate right
+                rotateLeft(parent);
+                rotateRight(grand);
+            }
+        } else {
+            if (child == parent.right) {
+                // RR rotate left
+                rotateLeft(grand);
+            } else {
+                // RL rotate right first and then rotate left
+                rotateRight(parent);
+                rotateLeft(grand);
+            }
+        }
+    }
+
+    /**
+     * see {@link this#rebalance2}
+     * 平衡方案二：从四种变换中抽离出通用的逻辑
+     *
+     * @param node
+     */
+    private void rebalance(Node<E> node) {
+        AVLNode grand = (AVLNode) node;
+        AVLNode parent = getTallerChild(grand);
+        AVLNode child = getTallerChild(parent);
+        if (parent == grand.left) {
+            if (child == parent.left) {
+                /*
+                  LL
+                           _______f______
+                          |             |
+                      ____d____         g
+                     |        |
+                    _b_       e
+                   |  |
+                   a  c
+
+                   f -> grand, d -> parent, b -> child
+                 */
+                rotate(grand,
+                        cast(child.left), child, cast(child.right),
+                        parent,
+                        cast(parent.right), grand, cast(grand.right));
+            } else {
+                /*
+                  LR
+                       ______f_____
+                      |           |
+                   ___b___        g
+                  |      |
+                  a     _d_
+                       |  |
+                       c  e
+
+                  f -> grand, b -> parent, d -> child
+                 */
+                rotate(grand,
+                        cast(parent.left), parent, cast(child.left),
+                        child,
+                        cast(child.right), grand, cast(grand.right));
+            }
+        } else {
+            if (child == parent.right) {
+                /*
+                  RR
+                   ____b____
+                  |        |
+                  a    ____d____
+                      |        |
+                      c       _f_
+                             |  |
+                             e  g
+
+                  b -> grand, d -> parent, f -> child
+                 */
+                rotate(grand,
+                        cast(grand.left), grand, cast(parent.left),
+                        parent,
+                        cast(child.left), child, cast(child.right));
+
+            } else {
+                /*
+                  RL
+                   ______b______
+                  |            |
+                  a         ___f___
+                           |      |
+                          _d_     g
+                         |  |
+                         c  e
+
+                  b -> grand, f -> parent, d -> child
+                 */
+                rotate(grand,
+                        cast(grand.left), grand, cast(child.left),
+                        child,
+                        cast(child.right), parent, cast(parent.right));
+            }
+        }
+    }
+
+    @Override
+    protected void afterRotate(Node<E> node, Node<E> child) {
+        super.afterRotate(node, child);
+        ((AVLNode) node).updateHeight();
+        ((AVLNode) child).updateHeight();
+    }
+
+    @Override
+    protected void rotate(Node<E> r, Node<E> a, Node<E> b, Node<E> c, Node<E> d, Node<E> e, Node<E> f, Node<E> g) {
+        super.rotate(r, a, b, c, d, e, f, g);
+        ((AVLNode) b).updateHeight();
+        ((AVLNode) f).updateHeight();
+        ((AVLNode) d).updateHeight();
+    }
+
+    private AVLNode cast(Node node) {
+        return (AVLNode) node;
+    }
+
+    private AVLNode getTallerChild(AVLNode node) {
+        int r = node.getRightHeight();
+        int l = node.getLeftHeight();
+        return (AVLNode) (r > l ? node.right : node.left);
+    }
+
+    private void updateHeight(Node<E> node) {
+        ((AVLNode) node).updateHeight();
+    }
+
+    protected boolean isBalanced(Node<E> node) {
+        return ((AVLNode) node).isBalanced();
+    }
+
+    @Override
+    protected Node<E> createNode(E element, Node<E> parent) {
+        return new AVLNode(element, parent);
+    }
+
+    protected static class AVLNode extends Node {
+        int height = 1;
+
+        AVLNode(Object element, Node parent) {
+            super(element, parent);
+        }
+
+        void updateHeight() {
+            int r = getRightHeight();
+            int l = getLeftHeight();
+            height = 1 + Math.max(r, l);
+        }
+
+        int getLeftHeight() {
+            return left == null ? 0 : ((AVLNode) left).height;
+        }
+
+        int getRightHeight() {
+            return right == null ? 0 : ((AVLNode) right).height;
+        }
+
+        int balanceFactor() {
+            int r = getRightHeight();
+            int l = getLeftHeight();
+            return Math.abs(r - l);
+        }
+
+        boolean isBalanced() {
+            return balanceFactor() <= 1;
+        }
+
+        @Override
+        public String toString() {
+            return element.toString() + "(" + (parent == null ? "null" : parent.element) + ")";
+        }
+    }
+
+    public static void main(String[] args) {
+        AVLTree tree = new AVLTree();
+        for (int i = 0; i < 50; i++) {
+            tree.add(i);
+        }
+        BinaryTrees.println(tree);
+
+    }
+}
+```
+
+##### RBTree
+
+```java
+package top.zhenganwen.learn.algorithm.datastructure.tree;
+
+import top.zhenganwen.learn.algorithm.commons.printer.BinaryTrees;
+
+import java.util.Comparator;
+import java.util.Optional;
+
+/**
+ * @author zhenganwen
+ * @date 2019/11/28/028 15:52
+ */
+public class RBTree<E> extends BBST<E> {
+
+    private static boolean RED   = false;
+    private static boolean BLACK = true;
+
+    public RBTree() {
+
+    }
+
+    public RBTree(Comparator<E> comparator) {
+        this.comparator = comparator;
+    }
+
+    /**
+     * adjustment after bst's insertion.
+     * </hr>
+     * the node must be leaf node, and we can regard it as insert a element into a 2-3-4 b-tree.</br>
+     * the 2-3-4 b-tree's leaf node must but only have one black node. </br>
+     * so the b-tree's leaf node can have four situations below:
+     * <ul>
+     *     <li>one black node with two red children. R<-B->R </li>
+     *     <li>one black node with one red left child. R<-B- </li>
+     *     <li>one black node with one red right child. -B->R </li>
+     *     <li>one black node. -B- </li>
+     * </ul>
+     *
+     * 1. the insert node is added into the left of right of the black node.
+     *
+     *          B-      => R<-B- / -B->R
+     *          <-B-    => R<-B->R
+     *          B->R    => R<-B->R
+     *
+     *         insert into directly with bst's insertion logic
+     *
+     * 2. the insert node is added into the left of right of the red node. after insertion, the overflow not occurs
+     *
+     *               R<-B-    =>      R<-B        R<-B
+     *                                 \         /
+     *                                  R       R
+     *
+     *               -B->R    =>      -B->R       -B->R
+     *                                  /              \
+     *                                 R                R
+     *
+     *          after insertion of bst, we need rotate to let the mid node become the black node
+     *
+     * 3. the insert node is added into the left of right of the red node. and then, the overflow occurs
+     *
+     *              R<-B->R  =>      R<-B->R         R<-B->R         R<-B->R          R<-B->R
+     *                             /                        \         \                   /
+     *                            R                          R         R                 R
+     *
+     *          let the left and right become two independent b-tree node(color it to black), and then
+     *          color itself to red to become a insertion node added its parent b-tree node
+     * @param node
+     */
+    @Override
+    protected void afterAdd(Node<E> node) {
+        // the insert node is root node or node overflows to top
+        if (node.parent == null) {
+            darken(node);
+            return;
+        }
+        // the node is leaf node
+        RBNode<E> parent = (RBNode<E>) node.parent;
+        // 1. black parent
+        if (parent.color == BLACK) {
+            // redden it -> default red color
+            return;
+        }
+        // 2. red parent, and grand must exist
+        RBNode<E> uncle = sibling(parent);
+        RBNode<E> grand = (RBNode<E>) parent.parent;
+        if (isRed(uncle)) {
+            // 2.1 overflow
+            darken(parent);
+            darken(uncle);
+            redden(grand);
+            afterAdd(grand);
+            return;
+        }
+        // 2.2 uncle is null or black
+        if (parent.isLeftChildOf(grand)) {
+            if (node.isLeftChildOf(parent)) {
+                // LL
+                darken(parent);
+                redden(grand);
+            } else {
+                // LR
+                darken(node);
+                redden(grand);
+                rotateLeft(parent);
+            }
+            rotateRight(grand);
+        } else {
+            if (node.isLeftChildOf(parent)) {
+                // RL
+                darken(node);
+                redden(grand);
+                rotateRight(parent);
+            } else {
+                // RR
+                redden(grand);
+                darken(parent);
+            }
+            rotateLeft(grand);
+        }
+    }
+
+    /**
+     * 首先，真正被删除的bst节点肯定存在于该红黑树等价的4阶B树的叶子节点中：
+     *
+     *      a. R_1 <- B_2 -> R_3
+     *
+     *      b. R_1 <- B_2
+     *
+     *      c. B_2 -> R_3
+     *
+     *      d. B_2
+     *
+     * 1. 如果被删除的节点是红节点，如上例 a,b,c 的 R_1 和 R_3，那么在bst的删除逻辑之后不需要额外的修复操作
+     *
+     * 2. 如果被删除的节点是黑色节点，如上例 b,c 中的 B_2
+     *
+     *      2.1 首先不要囊括 a 中的 B_2，这种情况我们会删除其后继节点 R_3
+     *
+     *      2.2 如果删除 b，c 中的 B_2， bst的删除逻辑是 用其孩子节点 R_1/R_3 替换它，这时我们为了保证等价性
+     *      （B树节点中必须有且仅有一个黑色节点），需要将该红色孩子节点染成黑色
+     *
+     * 3. 如果被删除的节点没有红色孩子节点（即替换节点为null）
+     *
+     *      3.1 如果被删除节点的兄弟节点是黑色节点
+     *
+     *          3.1.1 如果【兄弟节点有红色孩子节点可以借】，则通过旋转操作修复红黑树
+     *
+     *                如果兄弟和其红色孩子节点的相对方位是 LL 或 RR，则对父节点进行 右旋 或 左旋，
+     *                并将旋转后的中间节点【继承父节点的颜色】、【中间节点的两个孩子染成黑色】
+     *
+     *                e.g: delete B_4
+     *
+     *                          R_3                        R_2
+     *                         /   \     =>               /   \
+     *                R_1 <- B_2   B_4                 R_1     B_3
+     *
+     *                如果兄弟和其红色孩子节点的相对方位是 LR 或 RL，则先将其转变为 LL 或 RR 的情况后
+     *                再复用上述的处理逻辑
+     *
+     *                e.g: delete B_5
+     *
+     *                     R_4                           R_4                      R_3
+     *                   /     \        =>             /     \      =>          /     \
+     *                B_2->R_3  B_5             B_2->R_3     B_5              B_2     B_4
+     *
+     *          3.1.2 如果兄弟节点没有红色孩子可以借，则考虑4阶B树的【下溢】，等价修复红黑树
+     *
+     *                【将父节点拉下来】与当前节点和兄弟节点合并成一个新的4阶B树节点（实际做法是将父节点染黑，兄弟节点染红）
+     *                考虑【下溢】有向上传播性，我们将父节点作为删除后节点递归执行修复逻辑
+     *
+     *                e.g: delete B_8
+     *                
+     *                           B_5                            B_5                           
+     *                         /    \                         /    \                             
+     *                     B_3       B_7        =>        B_3       \        =>           B_3   <-  B_5    
+     *                   /    \     /   \               /    \       \                  /    \       \   
+     *                B_2    B_4   B_6  B_8          B_2    B_4  R_6<-B_7            B_2    B_4  R_6<-B_7
+     *
+     *                        B_8的兄弟节点B_6没有红色孩子节点          B_7的兄弟节点B_3没有红色孩子节点              下溢到了根节点，终止
+     *         
+     *      3.2 如果被删除节点的兄弟节点是红色节点
+     *          
+     *          根据红黑色的性质，等价的4阶B树中，被删除节点和兄弟节点并不处于同一层中
+     *          （兄弟节点和父节点位于一个B树节点中，被删除节点位于该B树节点的下一层的B树节点中）
+     *
+     *          那么兄弟节点肯定有两个黑色孩子节点，与被删除节点位于同一层，可以通过旋转转换成 3.1
+     *
+     *
+     *          e.g: delete B_7
+     *
+     *              R_4 <- B_6                  B_4 -> R_6
+     *            /    \      \      =>       /      /    \
+     *          B_3    B_5    B_7           B_3    B_5    B_7
+     *
+     *               通过对R_6右旋，B_7的兄弟节点由红色的R_4转换成了黑色的B_5，此后可复用 3.1 的逻辑
+     *
+     *
+     *
+     * @param node
+     * @param replacement
+     */
+    @Override
+    protected void afterRemove(Node<E> node, Node<E> replacement) {
+        // 1. 如果被删除节点是红色节点
+        if (isRed(node)) {
+            return;
+        }
+        // 2. 如果替代被删除节点的是红色节点
+        if (isRed(replacement)) {
+            darken(replacement);
+            return;
+        }
+        if (node.parent == null) {  // 3.1.2 中的下溢传播到根节点终止
+            return;
+        }
+
+        Node<E> parent = node.parent;
+        boolean left = parent.left == null || parent.left == node; // 当前被删除节点是否是左子节点 或 上溢传播至的节点是否是左子节点
+        RBNode<E> sibling = (RBNode<E>) (left ? parent.right : parent.left);
+
+        // 3.2 如果兄弟节点是红色节点，则旋转父节点，转变为 3.1
+        if (isRed(sibling)) {
+            if (left) rotateRight(parent);
+            else rotateLeft(parent);
+            afterRemove(node, null);
+        // 3.1 兄弟节点是黑色节点
+        } else if (hasRedChild(sibling)) {
+            // 3.1.1 兄弟节点有红色孩子可以借，将旋转后的中间节点继承父节点颜色，两边节点染黑
+            darken(parent); // 父节点不会成为中间节点，直接提前染黑
+            if (sibling.isLeftChildOf(parent)) {
+                if (isRed(sibling.left)) {
+                    // LL 兄弟节点将成为中间节点
+                    if (isRed(parent)) {
+                        redden(sibling);
+                    }
+                    darken(sibling.left);
+                } else {
+                    // LR 兄弟节点的孩子将成为中间节点
+                    if (isRed(parent)) {
+                        redden(sibling.right);
+                    }
+                    darken(sibling);
+                    rotateLeft(sibling); // 调整 LR 为 LL
+                }
+                // 到这里肯定是 LL
+                rotateRight(parent);
+            } else {
+                // 与上述对称
+                if (isRed(sibling.left)) {
+                    // RL
+                    if (isRed(parent)) {
+                        redden(sibling.left);
+                    }
+                    darken(sibling);
+                    rotateRight(sibling);
+                } else {
+                    // RR
+                    if (isRed(parent)) {
+                        redden(sibling);
+                    }
+                    darken(sibling.right);
+                }
+                rotateLeft(parent);
+            }
+        } else {
+            // 3.1.2 兄弟节点没有红色孩子可以借，父节点染黑、兄弟节点染红，下溢传播（如果拉下来的父节点是黑色）
+            boolean parentColor = ((RBNode<E>) parent).color;
+            darken(parent);
+            redden(sibling);
+            if (parentColor == BLACK) {
+                afterRemove(parent, null);
+            }
+        }
+    }
+
+    private boolean hasRedChild(RBNode<E> rbNode) {
+        return rbNode != null && (isRed(rbNode.left) || isRed(rbNode.right));
+    }
+
+    private RBNode<E> color(Node<E> node, boolean color) {
+        RBNode<E> n = (RBNode<E>) node;
+        n.color = color;
+        return n;
+    }
+
+    private RBNode redden(Node<E> node) {
+        return color(node, RED);
+    }
+
+    private RBNode darken(Node<E> node) {
+        return color(node, BLACK);
+    }
+
+    /**
+     * if the {@code node} is null or its color is black, it will return false
+     * @param node
+     * @return
+     */
+    private boolean isRed(Node<E> node) {
+        return node != null && ((RBNode<E>) node).color == RED;
+    }
+
+    private boolean isBlack(Node<E> node) {
+        // node is leaf's children or non-null black node
+        return node == null || ((RBNode<E>) node).color == BLACK;
+    }
+
+    private RBNode<E> sibling(Node<E> node) {
+        if (node.parent == null) {
+            return null;
+        }
+        if (node.isLeftChildOf(node.parent)) {
+            return (RBNode<E>) node.parent.right;
+        } else {
+            return (RBNode<E>) node.parent.left;
+        }
+    }
+
+    @Override
+    protected Node<E> createNode(E element, Node<E> parent) {
+        return new RBNode<>(element, parent);
+    }
+
+    private class RBNode<E> extends Node<E> {
+        boolean color = RED;
+
+        RBNode(E element, Node<E> parent) {
+            super(element, parent);
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder sb = new StringBuilder();
+            Optional.ofNullable(left).ifPresent(p -> sb.append(p.element).append("-"));
+            if (color == RED) {
+                sb.append("R_");
+            }
+            sb.append(element);
+            Optional.ofNullable(right).ifPresent(p -> sb.append("-").append(p.element));
+            Optional.ofNullable(parent).ifPresent(p -> sb.append("(").append(p.element).append(")"));
+            return sb.toString();
+        }
+    }
+
+    public static void main(String[] args) {
+        Integer[] arr = new Integer[]{
+                89, 90, 40, 21, 81, 58, 79, 85, 98, 12, 15, 91, 96, 69, 18, 66, 47, 43, 82
+        };
+        RBTree<Integer> rbt = new RBTree<>();
+        for (Integer i : arr) {
+            rbt.add(i);
+//            System.out.println("add 【" + i + "】");
+//            BinaryTrees.println(rbt);
+//            System.out.println("=================================================");
+        }
+        BinaryTrees.println(rbt);
+        System.out.println("=================================================");
+
+        for (Integer i : arr) {
+            rbt.remove(i);
+            System.out.println("remove 【" + i + "】");
+            BinaryTrees.println(rbt);
+            System.out.println("=================================================");
+        }
+    }
+}
+```
+
+### 为何平衡
+
+> 红黑树的5条性质能够保证其等价于一棵4阶B树
+
+![11-29-59.png](http://ww1.sinaimg.cn/large/006zweohgy1g9kj60931gj30k40cvtbl.jpg)
+
+## 性能对比
+
+### AVL树
+
+- 平衡标准比较严格：每个左右子树的高度差不超过1
+
+- 最大高度是 1.44 ∗ log 2 n + 2 − 1.328 （100W个节点，AVL树最大树高28）
+
+- 搜索、添加、删除都是 O(logn) 复杂度，其中添加仅需 O(1) 次旋转调整、**删除最多需要 O(logn) 次旋转调整**
+
+  ### 红黑树
+
+- 平衡标准比较宽松：没有一条路径会大于其他路径的2倍
+
+- 最大高度是 2 ∗ log 2 (n + 1) （ 100W个节点，红黑树最大树高40）
+
+- 搜索、添加、删除都是 O(logn) 复杂度，其中**添加、删除都仅需 O(1) 次旋转调整**
+
+> 据统计，红黑树删除节点发生上溢传播的次数不会超过3次，因此可认为旋转调整复杂度为O(1)
+
+### 技术选型
+
+- 搜索的次数远远大于插入和删除，选择AVL树；搜索、插入、删除次数几乎差不多，选择红黑树
+
+- 相对于AVL树来说，红黑树牺牲了部分平衡性以换取插入/删除操作时少量的旋转操作，整体来说性能要优于AVL树
+
+- **红黑树的平均统计性能优于AVL树，实际应用中更多选择使用红黑树**

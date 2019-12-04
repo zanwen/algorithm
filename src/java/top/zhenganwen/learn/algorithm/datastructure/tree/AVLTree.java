@@ -53,7 +53,7 @@ public class AVLTree<E> extends BBST<E> {
      * @param node
      */
     @Override
-    protected void afterRemove(Node<E> node) {
+    protected void afterRemove(Node<E> node, Node<E> replacement) {
         while ((node = node.parent) != null) {
             if (isBalanced(node)) {
                 updateHeight(node);

@@ -90,8 +90,8 @@ public class BinarySearchTree<E> implements BinaryTreeInfo {
             node = successor;
         }
 
-        // reach here, the degree of the node is possible only 0 or 1
-        // that is to say, the node only has one child
+        // reach here, the degree of the node is only possible 0 or 1
+        // that is to say, the node has no more than one child
         Node replacement = node.left == null ? node.right : node.left;
         if (replacement != null) {
             // the node's degree is 1
@@ -103,6 +103,7 @@ public class BinarySearchTree<E> implements BinaryTreeInfo {
             } else {
                 node.parent.left = replacement;
             }
+            afterRemove(node, replacement);
         } else {
             // the node is leaf node
             if (isRoot(node)) {
@@ -112,12 +113,12 @@ public class BinarySearchTree<E> implements BinaryTreeInfo {
             } else {
                 node.parent.left = null;
             }
+            afterRemove(node, null);
         }
-        afterRemove(node);
     }
 
-    protected void afterRemove(Node<E> node) {
-        // let auto-balance bst overwrite the method to balance the tree
+    protected void afterRemove(Node<E> node, Node<E> replacement) {
+        // let auto-balance bst overwrite the method to rebalance the tree
     }
 
     private boolean isRoot(Node<E> node) {
